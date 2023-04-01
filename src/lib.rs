@@ -11,7 +11,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new() -> Game {
+    pub fn build() -> Self {
         let art_steps = art::get_art();
         let picked_word = words::get_random_word();
         Game {
@@ -53,7 +53,6 @@ impl Game {
             self.print_art();
             println!("You lost");
             self.finished = true;
-            return;
         } else {
             self.print_art();
             let output = self.guess_output();
@@ -62,7 +61,6 @@ impl Game {
             if !output.contains('_') {
                 println!("You guessed the word: {}", self.picked_word);
                 self.finished = true;
-                return;
             }
         }
     }

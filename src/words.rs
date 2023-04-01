@@ -1,7 +1,6 @@
-use rand;
 use rand::seq::SliceRandom;
 
-const WORDS: &'static str = "ant baboon badger bat bear beaver camel cat clam cobra cougar
+const WORDS: &str = "ant baboon badger bat bear beaver camel cat clam cobra cougar
 coyote crow deer dog donkey duck eagle ferret fox frog goat
 goose hawk lion lizard llama mole monkey moose mouse mule newt
 otter owl panda parrot pigeon python rabbit ram rat raven

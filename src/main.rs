@@ -1,6 +1,6 @@
 use hangman::Game;
 
 fn main() {
-    let game = Game::new();
+    let game = Game::build();
     game.run();
 }
