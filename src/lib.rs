@@ -58,7 +58,7 @@ impl Game {
 
         self.check_letter(letter);
 
-        if self.wrong_letters.len() == self.art_steps.len() - 1 {
+        if self.wrong_letters.len() == self.art_steps.len() {
             return Err(GameError::GameOver);
         } else {
             let guessed_letters = self.get_guessed_letters();
@@ -120,7 +120,10 @@ impl Game {
     }
 
     fn print_art(&self) {
-        if let Some(art) = self.art_steps.get(self.wrong_letters.len()) {
+        if self.wrong_letters.len() == 0 {
+            return;
+        }
+        if let Some(art) = self.art_steps.get(self.wrong_letters.len() - 1) {
             println!("{art}");
         }
     }
