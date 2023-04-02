@@ -19,3 +19,7 @@ pub fn get_random_word() -> String {
     word.expect("there should be at least one word in the list")
         .to_string()
 }
+
+pub fn get_ascii_leters() -> Vec<char> {
+    (b'a'..=b'z').map(|c| c as char).collect()
+}

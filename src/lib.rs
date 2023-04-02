@@ -1,13 +1,19 @@
-use std::io;
+use std::{collections::HashSet, io};
 mod art;
 mod words;
 
 pub struct Game {
     picked_word: String,
-    wrong_guesses: usize,
+    wrong_letters: HashSet<char>,
     art_steps: Vec<&'static str>,
-    guessed_letters: Vec<char>,
-    finished: bool,
+    correct_letters: HashSet<char>,
+}
+
+enum GameError {
+    TooManyLetters,
+    LetterUsed,
+    FailedToReadInput,
+    GameOver,
 }
 
 impl Game {
@@ -16,79 +22,128 @@ impl Game {
         let picked_word = words::get_random_word();
         Game {
             art_steps,
-            wrong_guesses: 0,
-            guessed_letters: Vec::with_capacity(picked_word.len()),
+            wrong_letters: HashSet::with_capacity(picked_word.len()),
+            correct_letters: HashSet::with_capacity(picked_word.len()),
             picked_word,
-            finished: false,
         }
     }
 
     fn check_letter(&mut self, letter: char) {
         if !self.picked_word.contains(letter) {
-            self.wrong_guesses += 1;
+            self.wrong_letters.insert(letter);
         } else {
-            self.guessed_letters.push(letter)
+            self.correct_letters.insert(letter);
         }
     }
 
-    pub fn next(&mut self) {
+    fn read_input() -> Result<char, GameError> {
         println!("Enter a single letter: ");
         let mut line = String::new();
         io::stdin()
             .read_line(&mut line)
-            .expect("failed to read line");
+            .or(Err(GameError::FailedToReadInput))?;
 
         if line.trim().len() != 1 {
-            panic!("expected exactly one character");
+            return Err(GameError::TooManyLetters);
         }
-        let letter = line.chars().next().expect("expected exactly one character");
-        if self.guessed_letters.contains(&letter) {
+        let letter = line.chars().next().ok_or(GameError::FailedToReadInput)?;
+        Ok(letter)
+    }
+
+    fn next(&mut self, letter: char) -> Result<bool, GameError> {
+        if self.correct_letters.contains(&letter) || self.wrong_letters.contains(&letter) {
             println!("You already guessed this letter");
-            return;
+            return Err(GameError::LetterUsed);
         }
 
         self.check_letter(letter);
 
-        if self.wrong_guesses == self.art_steps.len() - 1 {
-            self.print_art();
-            println!("You lost");
-            self.finished = true;
+        if self.wrong_letters.len() == self.art_steps.len() - 1 {
+            return Err(GameError::GameOver);
         } else {
-            self.print_art();
-            let output = self.guess_output();
-            println!("{output}");
-
-            if !output.contains('_') {
+            let guessed_letters = self.get_guessed_letters();
+            if !guessed_letters.contains('_') {
                 println!("You guessed the word: {}", self.picked_word);
-                self.finished = true;
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
+
+    pub fn run(mut self) {
+        if std::env::var("DEBUG").is_ok() {
+            println!("Picked word is {}", self.picked_word);
+        }
+        loop {
+            self.print_art();
+            println!("{}", self.get_letters_state());
+            println!("{}", self.get_guessed_letters());
+
+            let input = if let Ok(input) = Self::read_input() {
+                input
+            } else {
+                continue;
+            };
+
+            match self.next(input) {
+                Err(GameError::GameOver) => {
+                    self.print_art();
+                    println!(
+                        "{}You lost{}. Your word was {}",
+                        art::RED,
+                        art::RESET,
+                        self.picked_word
+                    );
+                    break;
+                }
+                Ok(terminate) => {
+                    if terminate {
+                        break;
+                    }
+                }
+                _ => {}
             }
         }
     }
 
-    pub fn run(mut self) {
-        // println!("Picked word is {}", self.picked_word);
-        while !self.finished {
-            self.next();
-        }
-    }
-
-    fn guess_output(&self) -> String {
+    fn get_guessed_letters(&self) -> String {
         let output: String = self
             .picked_word
             .chars()
             .map(|c| {
-                if self.guessed_letters.contains(&c) {
-                    c
+                if self.correct_letters.contains(&c) {
+                    String::from(c)
                 } else {
-                    '_'
+                    String::from("_")
                 }
             })
-            .collect();
+            .collect::<Vec<String>>()
+            .join(" ");
         output
     }
 
     fn print_art(&self) {
-        let art = self.art_steps[self.wrong_guesses];
-        println!("{art}");
+        if let Some(art) = self.art_steps.get(self.wrong_letters.len()) {
+            println!("{art}");
+        }
+    }
+
+    fn get_letters_state(&self) -> String {
+        let letters = words::get_ascii_leters()
+            .iter()
+            .map(|c| {
+                let prefix = if self.correct_letters.contains(c) {
+                    art::GREEN
+                } else if self.wrong_letters.contains(c) {
+                    art::RED
+                } else {
+                    ""
+                };
+                return format!("{prefix}{c}{}", art::RESET);
+            })
+            .collect();
+
+        letters
     }
 }
