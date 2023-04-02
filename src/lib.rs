@@ -89,12 +89,8 @@ impl Game {
             match self.next(input) {
                 Err(GameError::GameOver) => {
                     self.print_art();
-                    println!(
-                        "{}You lost{}. Your word was {}",
-                        art::RED,
-                        art::RESET,
-                        self.picked_word
-                    );
+                    art::print_red("You lost.");
+                    println!("Your word was {}", self.picked_word);
                     break;
                 }
                 Ok(terminate) => {
@@ -133,14 +129,14 @@ impl Game {
         let letters = words::get_ascii_leters()
             .iter()
             .map(|c| {
-                let prefix = if self.correct_letters.contains(c) {
-                    art::GREEN
+                let letter = if self.correct_letters.contains(c) {
+                    art::format_green(&c.to_string())
                 } else if self.wrong_letters.contains(c) {
-                    art::RED
+                    art::format_red(&c.to_string())
                 } else {
-                    ""
+                    c.to_string()
                 };
-                return format!("{prefix}{c}{}", art::RESET);
+                letter
             })
             .collect();
 
