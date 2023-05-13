@@ -1,5 +1,6 @@
 pub fn get_art() -> Vec<&'static str> {
     vec![
+        // https://doc.rust-lang.org/stable/reference/tokens.html#raw-string-literals
         r#"
   +---+
   |   |
